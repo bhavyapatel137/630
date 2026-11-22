@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101312">
+<title>Project Run</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="vendor/leaflet.css">
+<style>
+:root{--bg:#f4f1ea;--card:#fffdf8;--ink:#101312;--mute:#6a6f6b;--line:#e2ddd0;--go:#ff5a1f;--go-ink:#fff;--ok:#12805c;--warn:#b25e00;--bad:#b3261e;--dark:#101312}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);overscroll-behavior-y:none}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+#app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+header{padding:calc(14px + env(safe-area-inset-top)) 20px 6px;display:flex;justify-content:space-between;align-items:baseline}
+header b{font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+header span{font-size:12px;color:var(--mute)}
+main{padding:8px 16px 24px;flex:1}
+h1{font-size:28px;line-height:1.15;letter-spacing:-.02em;margin:8px 4px 14px}
+h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin:22px 4px 8px;font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+.stat b{display:block;font-size:24px;letter-spacing:-.02em;font-weight:650}
+.stat small{font-size:12px;color:var(--mute)}
+.big{width:100%;padding:20px;border-radius:18px;background:var(--go);color:var(--go-ink);font-size:20px;font-weight:700;letter-spacing:.02em}
+.big:disabled{opacity:.45}
+.btn{padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:600;width:100%}
+.btn.dark{background:var(--dark);color:#fff;border-color:var(--dark)}
+.btn.danger{color:var(--bad)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:5px 10px;border-radius:99px;background:#ebe6d9;color:var(--mute)}
+.chip i{width:8px;height:8px;border-radius:50%;background:#aaa}
+.chip.ok i{background:var(--ok)}.chip.mid i{background:#d99000}.chip.bad i{background:var(--bad)}
+.note{font-size:13px;color:var(--mute);margin:10px 4px}
+.note.warn{color:var(--warn)}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav div{display:flex;width:100%;max-width:520px}
+nav button{flex:1;padding:12px 0 10px;font-size:12px;color:var(--mute);font-weight:600;letter-spacing:.04em}
+nav button[aria-current=page]{color:var(--ink);box-shadow:inset 0 3px 0 var(--go)}
+label{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
+input[type=text],input[type=number],select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.tog{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
+.tog input{width:22px;height:22px;accent-color:var(--go)}
+.item{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:14px 16px}
+.item b{font-size:18px}.item small{display:block;color:var(--mute);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 4px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:12px;color:var(--mute);font-weight:600}
+td.bar{width:55%}td.bar i{display:block;height:8px;border-radius:4px;background:var(--go)}
+#map{height:260px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#e9e5da;z-index:0}
+.bars{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:6px}
+.bars div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:10px;color:var(--mute)}
+.bars i{display:block;width:100%;background:var(--go);border-radius:5px 5px 0 0;min-height:2px}
+.bars span{margin-top:4px}
+svg.pace{width:100%;height:110px;display:block}
+/* live run screen */
+#live{position:fixed;inset:0;background:var(--dark);color:#fff;z-index:20;display:none;flex-direction:column;padding:calc(18px + env(safe-area-inset-top)) 20px calc(22px + env(safe-area-inset-bottom))}
+#live.on{display:flex}
+#live .top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#b9bdb9}
+#live .chip{background:#232826;color:#cfd3cf}
+#lstate{letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+#lstate.paused{color:#ffb020}
+#ldist{font-size:clamp(84px,30vw,150px);font-weight:750;letter-spacing:-.05em;line-height:1;margin-top:auto}
+#live .unit{color:#b9bdb9;font-size:15px;letter-spacing:.12em;text-transform:uppercase;margin:2px 0 26px 4px}
+#live .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 12px;margin-bottom:auto}
+#live .grid b{display:block;font-size:34px;font-weight:650;letter-spacing:-.02em}
+#live .grid small{color:#b9bdb9;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+#lmsg{min-height:20px;font-size:13px;color:#ffb020;margin:12px 0}
+#live .acts{display:flex;gap:12px}
+#live .acts button{flex:1;padding:20px;border-radius:18px;font-size:18px;font-weight:700}
+#bpause{background:#fff;color:var(--dark)}#bfinish{background:var(--go);color:#fff}
+#count{position:absolute;inset:0;background:var(--go);display:none;align-items:center;justify-content:center;font-size:200px;font-weight:800}
+#count.on{display:flex}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:none;align-items:flex-end;justify-content:center}
+#sheet.on{display:flex}
+#sheet>div{background:var(--card);color:var(--ink);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom))}
+#sheet h3{font-size:20px;margin-bottom:6px}#sheet p{color:var(--mute);font-size:14px;margin-bottom:14px}
+#sheet button{margin-top:8px}
+:focus-visible{outline:3px solid #1a73e8;outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header><b>Project Run</b><span id="ver"></span></header>
+  <main id="view"></main>
+</div>
+<nav><div>
+  <button data-tab="run">RUN</button><button data-tab="history">HISTORY</button><button data-tab="stats">STATS</button><button data-tab="profile">PROFILE</button>
+</div></nav>
+
+<section id="live" aria-live="off">
+  <div class="top"><span id="lstate">Running</span><span class="chip" id="lgps"><i></i><span>GPS</span></span></div>
+  <div id="ldist" class="num">0.00</div><div class="unit">kilometres</div>
+  <div class="grid">
+    <div><b id="ltime" class="num">0:00</b><small>Time</small></div>
+    <div><b id="lpace" class="num">--:--</b><small>Pace now /km</small></div>
+    <div><b id="lavg" class="num">--:--</b><small>Avg pace /km</small></div>
+    <div><b id="lkcal" class="num">0</b><small>Calories (est.)</small></div>
+  </div>
+  <div id="lmsg"></div>
+  <div class="acts"><button id="bpause">Pause</button><button id="bfinish">Finish</button></div>
+  <div id="count" class="num">3</div>
+</section>
+<div id="sheet"><div id="sheetbody"></div></div>
+
+<script src="vendor/leaflet.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
